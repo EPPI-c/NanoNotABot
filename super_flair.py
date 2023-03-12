@@ -22,10 +22,13 @@ class Super_Flair(commands.Cog):
     def __init__(self, bot:commands.Bot) -> None:
         self.bot = bot
         self.flairbot = superflair.FlairBot()
+
         with open(CONFIG_FILE) as f:
             self.config = json.load(f)
+        
+        actions = {'remove': self.flairbot.remove_post_for_no_sauce, 'comment': self.flairbot.comment_no_sauce, 'none': self.__none}
 
-        self.no_sauce_action = self.flairbot.comment_no_sauce
+        self.no_sauce_action = actions[self.config['action']]
         self.no_sauce_spoiler = self.config['no_sauce_spoiler']
 
         self.flairing = None
@@ -82,11 +85,47 @@ class Super_Flair(commands.Cog):
             await self.__initiate_flairing()
             await ctx.send(f'spoiler mode is now {self.config["no_sauce_spoiler"]}')
 
+    @commands.command()
+    @can_use_flair()
+    async def activate_commenting(self, ctx):
+        async with ctx.typing():
+            await self.__stop_flairing()
+            self.no_sauce_action = self.flairbot.comment_no_sauce
+            self.config['action'] = 'comment'
+            self.save_config()
+            await self.__initiate_flairing()
+            await ctx.send('commenting on posts without sauce is active')
+
+    @commands.command()
+    @can_use_flair()
+    async def activate_removing(self, ctx):
+        async with ctx.typing():
+            await self.__stop_flairing()
+            self.no_sauce_action = self.flairbot.remove_post_for_no_sauce
+            self.config['action'] = 'remove'
+            self.save_config()
+            await self.__initiate_flairing()
+            await ctx.send('removing posts without sauce is active')
+
+    @commands.command()
+    @can_use_flair()
+    async def no_action(self, ctx):
+        async with ctx.typing():
+            await self.__stop_flairing()
+            self.no_sauce_action = self.__none
+            self.config['action'] = 'none'
+            self.save_config()
+            await self.__initiate_flairing()
+            await ctx.send('no action is active')
+
     async def __stop_flairing(self):
         for task in (self.flairing, self.collecting_post, self.no_sauce_hook):
             if task:
                 if not task.done():
                     task.cancel()
+
+    async def __none(self, *_):
+        return
 
     async def __initiate_flairing(self):
         self.flairing = asyncio.create_task(self.flairbot.flairer.flairing())
