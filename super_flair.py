@@ -66,6 +66,7 @@ class Super_Flair(commands.Cog):
                 else:
                     response = f'{response}\n{key}: inactive'
             response = f'{response}\naction: {self.config["action"]}'
+            await ctx.send(response)
 
     @commands.command()
     @can_use_flair()
