@@ -30,7 +30,6 @@ class Rank(commands.Cog):
         async with ctx.typing():
             if not (channel := self.ranking.get(ctx.channel.id)):
                 return
-            global ranking
             ra = []
             start = time.time()
             for msg in channel:

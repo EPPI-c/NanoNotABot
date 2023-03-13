@@ -55,6 +55,18 @@ class Super_Flair(commands.Cog):
             self.save_config()
             await ctx.send(f'disallowed {ctx.guild.name} to use superflair reload required')
 
+    @commands.command(aliases=['fstatus', 'fs'])
+    @can_use_flair()
+    async def flairing_status(self, ctx):
+        response = ''
+        async with ctx.typing():
+            for key, task in {'flairing': self.flairing, 'collecting':self.collecting_post, 'no_sauce_hook':self.no_sauce_hook}.items():
+                if task:
+                    response = f'{response}\n{key}: {"inactive" if task.done() else "active"}'
+                else:
+                    response = f'{response}\n{key}: inactive'
+            response = f'{response}\naction: {self.config["action"]}'
+
     @commands.command()
     @can_use_flair()
     async def initiate_flairing(self, ctx):
