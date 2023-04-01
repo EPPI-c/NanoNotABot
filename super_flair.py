@@ -72,10 +72,10 @@ class Super_Flair(commands.Cog):
     @can_use_flair()
     async def initiate_flairing(self, ctx):
         async with ctx.typing():
-            await self.__stop_flairing()
-            await self.__initiate_flairing()
             self.config['flairing_on'] = True
             self.save_config()
+            await self.__stop_flairing()
+            await self.__initiate_flairing()
             await ctx.send("I activated flairing")
 
     @commands.command()
@@ -141,9 +141,21 @@ class Super_Flair(commands.Cog):
         return
 
     async def __initiate_flairing(self):
-        self.flairing = asyncio.create_task(self.flairbot.flairer.flairing())
+        if self.config['flairing_on']:
+            self.flairing = asyncio.create_task(self.flairbot.flairer.flairing())
         self.collecting_post = asyncio.create_task(self.flairbot.collect_posts())
         self.no_sauce_hook = asyncio.create_task(self.flairbot.no_sauce_hook(self.no_sauce_action, spoiler=self.no_sauce_spoiler))
+        asyncio.create_task(self.restartor(self.flairing))
+        asyncio.create_task(self.restartor(self.collecting_post))
+        asyncio.create_task(self.restartor(self.no_sauce_hook))
+        
+    async def restartor(self, task):
+        try:
+            await task
+        finally:
+            await self.__stop_flairing()
+            await self.__initiate_flairing()
+
 
     def save_config(self):
         with open(CONFIG_FILE, 'w') as f:
