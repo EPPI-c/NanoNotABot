@@ -1,7 +1,7 @@
 version: "3"
 
 services:
-  Nano:
+  nano:
     build: ./
     environment:
       DISCORD_TOKEN: ASDFASDFASDA #add your discord token
