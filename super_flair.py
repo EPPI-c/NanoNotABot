@@ -1,3 +1,4 @@
+import os
 import json
 import asyncio
 
@@ -5,28 +6,34 @@ import superflair
 
 from discord.ext import commands
 
-CONFIG_FILE = 'superflair.json'
+CONFIG_FILE = 'data/superflair.json'
 
-async def get_super_flair(bot:commands.Bot):
+
+async def get_super_flair(bot: commands.Bot):
     super_flair = Super_Flair(bot)
     await super_flair.init_async()
     return super_flair
 
+
 def can_use_flair():
-    with open(CONFIG_FILE) as f: config = json.load(f)
+    with open(CONFIG_FILE) as f:
+        config = json.load(f)
+
     async def predicate(ctx):
         return ctx.guild.id in config['allowed_guilds']
     return commands.check(predicate)
 
+
 class Super_Flair(commands.Cog):
-    def __init__(self, bot:commands.Bot) -> None:
+    def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
-        self.flairbot = superflair.FlairBot()
+        self.flairbot = superflair.FlairBot(db=os.environ['SUPER_FLAIR_DB'])
 
         with open(CONFIG_FILE) as f:
             self.config = json.load(f)
-        
-        actions = {'remove': self.flairbot.remove_post_for_no_sauce, 'comment': self.flairbot.comment_no_sauce, 'none': self.__none}
+
+        actions = {'remove': self.flairbot.remove_post_for_no_sauce,
+                   'comment': self.flairbot.comment_no_sauce, 'none': self.__none}
 
         self.no_sauce_action = actions[self.config['action']]
         self.no_sauce_spoiler = self.config['no_sauce_spoiler']
@@ -38,7 +45,7 @@ class Super_Flair(commands.Cog):
     async def init_async(self):
         if self.config['flairing_on']:
             await self.__initiate_flairing()
-    
+
     @commands.command()
     @commands.is_owner()
     async def allow_guild(self, ctx):
@@ -60,7 +67,7 @@ class Super_Flair(commands.Cog):
     async def flairing_status(self, ctx):
         response = ''
         async with ctx.typing():
-            for key, task in {'flairing': self.flairing, 'collecting':self.collecting_post, 'no_sauce_hook':self.no_sauce_hook}.items():
+            for key, task in {'flairing': self.flairing, 'collecting': self.collecting_post, 'no_sauce_hook': self.no_sauce_hook}.items():
                 if task:
                     response = f'{response}\n{key}: {"inactive" if task.done() else "active"}'
                 else:
@@ -92,7 +99,7 @@ class Super_Flair(commands.Cog):
     async def switch_no_sauce_spoiler(self, ctx):
         'if True removes unsauced spoilered posts using flairbot'
         async with ctx.typing():
-            self.config['no_sauce_spoiler'] = not self.config['no_sauce_spoiler'] 
+            self.config['no_sauce_spoiler'] = not self.config['no_sauce_spoiler']
             self.save_config()
             await self.__stop_flairing()
             await self.__initiate_flairing()
@@ -142,13 +149,16 @@ class Super_Flair(commands.Cog):
 
     async def __initiate_flairing(self):
         if self.config['flairing_on']:
-            self.flairing = asyncio.create_task(self.flairbot.flairer.flairing())
-        self.collecting_post = asyncio.create_task(self.flairbot.collect_posts())
-        self.no_sauce_hook = asyncio.create_task(self.flairbot.no_sauce_hook(self.no_sauce_action, spoiler=self.no_sauce_spoiler))
+            self.flairing = asyncio.create_task(
+                self.flairbot.flairer.flairing())
+        self.collecting_post = asyncio.create_task(
+            self.flairbot.collect_posts())
+        self.no_sauce_hook = asyncio.create_task(self.flairbot.no_sauce_hook(
+            self.no_sauce_action, spoiler=self.no_sauce_spoiler))
         asyncio.create_task(self.restartor(self.flairing))
         asyncio.create_task(self.restartor(self.collecting_post))
         asyncio.create_task(self.restartor(self.no_sauce_hook))
-        
+
     async def restartor(self, task):
         try:
             await task
@@ -156,10 +166,10 @@ class Super_Flair(commands.Cog):
             await self.__stop_flairing()
             await self.__initiate_flairing()
 
-
     def save_config(self):
         with open(CONFIG_FILE, 'w') as f:
             json.dump(self.config, f)
+
 
 async def setup(bot):
     await bot.add_cog(await get_super_flair(bot))

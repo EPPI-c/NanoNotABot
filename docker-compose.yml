@@ -1,0 +1,20 @@
+version: "3"
+
+services:
+  Nano:
+    build: ./
+    environment:
+      DISCORD_TOKEN: ASDFASDFASDA #add your discord token
+      COMMAND_PREFIX: ">"
+      SUPER_FLAIR_DB: data/super_flair.db
+      REDDIT_CLIENT_ID: ASFDASDFASFD
+      REDDIT_CLIENT_SECRET: ASDFASFDASDF
+      REDDIT_PASSWORD: ASDFASFDASFD
+      REDDIT_USERNAME: ASDFASFDASFD
+      REDDIT_AGENT: reddit mod bot
+      SUBREDDIT: animemes
+      ROBO: roboragi
+    volumes:
+      - ./config/:/NanoNotABot/config
+      - ./data/:/NanoNotABot/data
+    restart: unless-stopped
