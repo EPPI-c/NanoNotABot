@@ -15,6 +15,5 @@ services:
       SUBREDDIT: animemes
       ROBO: roboragi
     volumes:
-      - ./config/:/NanoNotABot/config
       - ./data/:/NanoNotABot/data
     restart: unless-stopped
