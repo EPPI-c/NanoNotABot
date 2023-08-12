@@ -16,21 +16,28 @@ async def get_super_flair(bot: commands.Bot):
 
 
 def can_use_flair():
-    with open(CONFIG_FILE) as f:
-        config = json.load(f)
+    config = load_create_config()
 
     async def predicate(ctx):
         return ctx.guild.id in config['allowed_guilds']
     return commands.check(predicate)
 
+def load_create_config():
+    if (os.path.exists(CONFIG_FILE)):
+        with open(CONFIG_FILE) as f:
+            config = json.load(f)
+    else:
+        with open(CONFIG_FILE, 'w') as f:
+            config = {"flairing_on": False, "no_sauce_spoiler": False, "allowed_guilds": [], "action": "none"}
+            json.dump(config, f)
+    return config
 
 class Super_Flair(commands.Cog):
     def __init__(self, bot: commands.Bot) -> None:
         self.bot = bot
         self.flairbot = superflair.FlairBot(db=os.environ['SUPER_FLAIR_DB'])
 
-        with open(CONFIG_FILE) as f:
-            self.config = json.load(f)
+        self.config = load_create_config()
 
         actions = {'remove': self.flairbot.remove_post_for_no_sauce,
                    'comment': self.flairbot.comment_no_sauce, 'none': self.__none}

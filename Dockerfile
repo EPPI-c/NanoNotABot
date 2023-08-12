@@ -3,5 +3,5 @@ WORKDIR /NanoNotABot
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN mkdir -m a=rwx /NanoNotABot/data
-COPY NanoNotABot .
+COPY . .
 CMD ["python", "./main.py"]
